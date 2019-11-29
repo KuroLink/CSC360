@@ -81,6 +81,11 @@ void copyfile(char* addr, char* name, char* output, int rsb, int rbs, int numblk
 
 int main(int argc, char* argv[]) {
 
+	if (argc != 4) {
+		printf("ERROR: Missing parameters. Please try again");
+		exit(1);
+	}
+
 	int file = open(argv[1], O_RDWR);
 	struct stat buffer;
     int status = fstat(file, &buffer);

@@ -134,7 +134,7 @@ int main(int argc, char* argv[]) {
 		printrootdirectory(address, rtstrtblk, rtblksize, rdirblk);
 	}
 	else {
-		prinft("Not root directory.");
+		printf("Not root directory.");
 		exit(1);
 	}
 	
