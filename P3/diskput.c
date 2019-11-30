@@ -8,6 +8,113 @@
 #include <assert.h>
 #include <time.h>
 
+int getBlocksize(char* addr) {
+	int blksize=0;
+	memcpy(&blksize, addr+8, 2);
+	blksize=htons(blksize);
+	return blksize;
+}
+
+int Rootdirstrt(char* addr) {
+	int rds=0;
+	memcpy(&rds, addr+22, 4);
+	rds=htonl(rds);
+	return rds;
+}
+
+int Rootdirblk(char* addr) {
+	int rdb=0;
+	memcpy(&rdb, addr+26, 4);
+	rdb=htonl(rdb);
+	return rdb;
+}
+
+int checkfilesize(char* addr) {
+	int fsize = 0;
+	memcpy(&fsize, addr+9, 4);
+	fsize = ntohl(fsize);
+	return fsize;
+}
+
+int convertmth(char* m) {
+	int month = 0;
+	char mth[4];
+	strcpy(mth, m);
+
+	char jan[4] = "Jan";
+	char feb[4] = "Feb";
+	char mar[4] = "Mar";
+	char apr[4] = "Apr";
+	char may[4] = "May";
+	char jun[4] = "Jun";
+	char jul[4] = "Jul";
+	char aug[4] = "Aug";
+	char sep[4] = "Sep";
+	char oct[4] = "Oct";
+	char nov[4] = "Nov";
+	char dec[4] = "Dec";
+
+	if (strcmp(jan, mth) == 0) {
+		month = 1;
+	}
+	else if (strcmp(feb, mth) == 0) {
+		month = 2;
+	}
+	else if (strcmp(mar, mth) == 0) {
+		month = 3;
+	}
+	else if (strcmp(apr, mth) == 0) {
+		month = 4;
+	}
+	else if (strcmp(may, mth) == 0) {
+		month = 5;
+	}
+	else if (strcmp(jun, mth) == 0) {
+		month = 6;
+	}
+	else if (strcmp(jul, mth) == 0) {
+		month = 7;
+	}
+	else if (strcmp(aug, mth) == 0) {
+		month = 8;
+	}
+	else if (strcmp(sep, mth) == 0) {
+		month = 9;
+	}
+	else if (strcmp(oct, mth) == 0) {
+		month = 10;
+	}
+	else if (strcmp(nov, mth) == 0) {
+		month = 11;
+	}
+	else if (strcmp(dec, mth) == 0) {
+		month = 12;
+	}
+	return month;
+}
+
+void transferfile(char* addr, int rsb, int rbs, int numblks, char* writefile) {
+	for(int i=0; i<numblks; i++){
+		int fileinfo = 0;
+		char* addrstrt = addr + rsb + (rbs*i);
+		memcpy(&fileinfo, addrstrt, 1);
+
+		int filesize = checkfilesize(addrstrt);
+		char fname[31];
+		memcpy(&fname, addrstrt+27, 31);
+
+		char inname[31];
+		strcpy(inname, writefile);
+		/*if(strcmp(fname, inname) == 0) {
+			printf("file found and name is %s\n");
+		}
+		else {
+			printf("not right file\n");
+		}*/
+
+	}
+}
+
 int main(int argc, char* argv[]) {
 
 	/*if (argc != 4) {
@@ -23,37 +130,65 @@ int main(int argc, char* argv[]) {
     struct stat buffer2;
     int statuscheck = fstat(filemove, &buffer2);
 
-    printf("hour is %s\n", ctime(&buffer2.st_mtime));
+    //printf("hour is %s\n", ctime(&buffer2.st_mtime));
+	int count = 0;
+    char str[25]; 
+    strcpy(str, ctime(&buffer2.st_mtime));
 
-    //const char *hourstring = ctime(&buffer2.st_mtime); 
+    const char s[2] = " ";
+    char* token;
+    token = strtok(str, s);
 
-    //int hour;
+    int hour = 0;
+    int min = 0;
+    int sec = 0;
+    int year = 0;
+    int mnth = 0;
+    int day = 0;
 
-    //sscanf(hourstring, "%d", &hour);
+    //tokenize the string about date and time of file
+    while( token != NULL ) {
+    	if(count == 1) {
+    		mnth = convertmth(token);
+    	}
+    	if(count == 2) {
+    		day = atoi(token);
+    	}
+    	if(count == 3) {
+    		char* temphr = malloc(2);
+    		strncpy(temphr, token, 2);
+    		hour = atoi(temphr);
 
-    //printf("Hour is converted to int %d\n", hour);
+    		char* tempmin = malloc(2);
+    		strncpy(tempmin, token+3, 2);
+    		min = atoi(tempmin);
 
-    /*int min;
-    int sec;
-    int year;
-    int mth;
-    int day;*/
-
+    		char* tempsec = malloc(2);
+    		strncpy(tempsec, token+6, 2);
+    		sec = atoi(tempsec);
+    	}
+    	if(count == 4) {
+    		year = atoi(token);
+    	}
+    	count++;
+   		token = strtok(NULL, s);
+   }
+   printf("%d/%d/%d %d:%d:%d\n", year, mnth, day, hour, min, sec);
     //assuming no sub directory accessing
-    char* input = argv[2];
+    char* input = argv[2]; 
     char* dirfile = strtok(argv[3], "/");
 
     char* address=mmap(NULL, buffer.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, file, 0);
 
-    /*int blocksize = getBlocksize(address);
+    int blocksize = getBlocksize(address);
 	int rdirstrt = Rootdirstrt(address);    
 	int rdirblk = Rootdirblk(address);
 
 	int rtstrtblk = rdirstrt * blocksize;
 	int rtblksize = blocksize / rdirblk;
 
-   	transferfile(address, input, dirfile, rtstrtblk, rtblksize, rdirblk, blocksize);*/
-
+   	//transferfile(address, input, dirfile, rtstrtblk, rtblksize, rdirblk, blocksize);
+	transferfile(address, rtstrtblk, rtblksize, rdirblk, dirfile);
 
 	munmap(address,buffer.st_size);
  	close(file);
